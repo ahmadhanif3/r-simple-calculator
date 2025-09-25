@@ -7,6 +7,5 @@ This are the things you can do:
 * Use 'ans' in the calculation to use the last calculation result, or to view the last answer
 * Use 'hist' to view all the previous calculations
 * Use 'exit' to quit the program
-Enjoy!
 
 This small project is made for me to learn about R language
