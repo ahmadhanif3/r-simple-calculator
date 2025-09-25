@@ -1,3 +1,6 @@
+This small project is made for me to learn about R language
+Not using `eval(parse(text = "..."))``
+
 Welcome to the simple calculator. 
 This are the things you can do:
 * Do simple calculations with +, -, *, /, %%, ^
@@ -9,5 +12,3 @@ This are the things you can do:
 * Use 'clear' to clear the terminal
 * Use 'help' to show on how to use the program
 * Use 'exit' to quit the program
-
-This small project is made for me to learn about R language
