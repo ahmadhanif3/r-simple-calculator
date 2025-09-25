@@ -6,6 +6,8 @@ This are the things you can do:
 * No other characters except operators mentioned and numbers are allowed
 * Use 'ans' in the calculation to use the last calculation result, or to view the last answer
 * Use 'hist' to view all the previous calculations
+* Use 'clear' to clear the terminal
+* Use 'help' to show on how to use the program
 * Use 'exit' to quit the program
 Enjoy!\n\n")
 
@@ -47,14 +49,29 @@ while (calc.state) {
       }
     }
   }
+  else if (tolower(input) == "ans") {
+    cat(calc.ans)
+  }
+  else if (tolower(input) == "help") {
+    cat("This are the things you can do:
+* Do simple calculations with +, -, *, /, %%, ^
+* In this version, the program runs calculations in order (not PEMDAS)
+* Use the format -> num op num op num ...
+* No other characters except operators mentioned and numbers are allowed
+* Use 'ans' in the calculation to use the last calculation result, or to view the last answer
+* Use 'hist' to view all the previous calculations
+* Use 'help' to show on how to use the program
+* Use 'exit' to quit the program
+Enjoy!\n\n")
+  }
+  else if (tolower(input) == "clear") {
+    cat("\014")
+  }
   else {
     split.inputs <- strsplit(input, " +")[[1]]
     
     if (length(split.inputs) %% 2 == 0) {
       cat("Unfinished Statement...")
-    }
-    else if (input == "ans") {
-      cat(calc.ans)
     }
     else {
       calc.a <- split.inputs[1]
