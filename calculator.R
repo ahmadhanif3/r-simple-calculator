@@ -12,13 +12,13 @@ This are the things you can do:
 Enjoy!\n\n")
 
 calc.state <- TRUE
-calc.history <- c()
-calc.answers <- c()
+calc.history <- data.frame(expression=character(), result=numeric())
 calc.ans <- 0
 
 calculate = function(a, b, op){
   a <- as.numeric(a)
   b <- as.numeric(b)
+  
   ans = switch(op,
       "+" = a + b,
       "-" = a - b,
@@ -39,18 +39,19 @@ while (calc.state) {
     calc.state <- FALSE
   }
   else if (tolower(input) == 'hist'){
-    if (length(calc.history) == 0) {
+    if (nrow(calc.history) == 0) {
       cat('No calculations was done, yet... ;)')
     }
     else {
-      for (idx in 1:length(calc.history)){
-        cat(paste(idx,paste(calc.history[idx],calc.answers[idx],sep = " = "), sep = ". "))
-        cat("\n")
+      for (i in 1:nrow(calc.history)){
+        cat(paste(i, ". ", calc.history[i, "expression"], " = ", calc.history[i, "result"], "\n"))
       }
     }
+    next
   }
   else if (tolower(input) == "ans") {
     cat(calc.ans)
+    next
   }
   else if (tolower(input) == "help") {
     cat("This are the things you can do:
@@ -63,6 +64,7 @@ while (calc.state) {
 * Use 'help' to show on how to use the program
 * Use 'exit' to quit the program
 Enjoy!\n\n")
+    next
   }
   else if (tolower(input) == "clear") {
     cat("\014")
@@ -92,8 +94,7 @@ Enjoy!\n\n")
       }
       
       calc.ans <- calc.a
-      calc.history <- append(calc.history, input)
-      calc.answers <- append(calc.answers,calc.ans)
+      calc.history <- rbind(calc.history, data.frame(expression=input, result=calc.ans))
       cat(calc.ans)
     }
   }
