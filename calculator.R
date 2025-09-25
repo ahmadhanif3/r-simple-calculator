@@ -11,13 +11,16 @@ This are the things you can do:
 * Use 'exit' to quit the program
 Enjoy!\n\n")
 
+# --- GLOBAL VARIABLE ---
 calc.history <- data.frame(expression=character(), result=numeric())
 calc.ans <- 0
 
+# --- CALCULATE FUNCTION ---
 calculate = function(a, b, op){
   a <- as.numeric(a)
   b <- as.numeric(b)
   
+  # -- ZERO DIVISION ERROR --
   if (op == "/" && b == 0) {
     stop("Division by zero is not allowed")
   }
@@ -29,20 +32,25 @@ calculate = function(a, b, op){
       "/" = a / b,
       "%%" = a %% b,
       "^" = a^b,
-      stop("Unknown operator:", op)
+      stop("Unknown operator:", op) # -- UNKNOWN OPERATOR --
   )
   
   return(ans)
 }
 
+# --- MAIN LOOP ---
 while (TRUE) {
   input <- readline(prompt = "> ")
   
+  # --- COMMAND HANDLING ---
+  # -- EXIT ---
   if (tolower(input) == 'exit'){
     cat("Thank you for using the calculator!\n")
     break
   }
+  # -- HISTORY --
   else if (tolower(input) == 'hist'){
+    # - HISTORY IS EMPTY -
     if (nrow(calc.history) == 0) {
       cat('No calculations was done, yet... ;)')
     }
@@ -53,10 +61,12 @@ while (TRUE) {
     }
     next
   }
+  # -- ANSWER --
   else if (tolower(input) == "ans") {
     cat(calc.ans)
     next
   }
+  # -- HELP -- 
   else if (tolower(input) == "help") {
     cat("This are the things you can do:
 * Do simple calculations with +, -, *, /, %%, ^
@@ -70,6 +80,7 @@ while (TRUE) {
 Enjoy!\n\n")
     next
   }
+  # -- CLEAR TERMINAL --
   else if (tolower(input) == "clear") {
     cat("\014")
     next
@@ -78,6 +89,7 @@ Enjoy!\n\n")
   tryCatch({
     split.inputs <- strsplit(input, " +")[[1]]
     
+    # - TO BE DEVELOPPED, INPUT HANDLING -
     if (length(split.inputs) %% 2 == 0) {
       cat("Unfinished Statement...")
     }
@@ -89,6 +101,7 @@ Enjoy!\n\n")
       calc.op.idx <- 2
       calc.b.idx <- 3
       
+      # - CALCULATION ITERATION -
       while (calc.b.idx <= length(split.inputs)) {
         calc.b = split.inputs[calc.b.idx]
         if (calc.b == 'ans') {
@@ -103,6 +116,8 @@ Enjoy!\n\n")
       calc.history <- rbind(calc.history, data.frame(expression=input, result=calc.ans))
       cat(calc.ans)
     }
+    
+  # - ERROR HANDLING -
   }, error = function(e) {
     cat("Error:", e$message)
   })
