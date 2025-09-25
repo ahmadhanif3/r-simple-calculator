@@ -6,6 +6,8 @@ This are the things you can do:
 * No other characters except operators mentioned and numbers are allowed
 * Use 'ans' in the calculation to use the last calculation result, or to view the last answer
 * Use 'hist' to view all the previous calculations
+* Use 'clear' to clear the terminal
+* Use 'help' to show on how to use the program
 * Use 'exit' to quit the program
 
 This small project is made for me to learn about R language
