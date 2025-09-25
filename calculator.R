@@ -11,13 +11,16 @@ This are the things you can do:
 * Use 'exit' to quit the program
 Enjoy!\n\n")
 
-calc.state <- TRUE
 calc.history <- data.frame(expression=character(), result=numeric())
 calc.ans <- 0
 
 calculate = function(a, b, op){
   a <- as.numeric(a)
   b <- as.numeric(b)
+  
+  if (op == "/" && b == 0) {
+    stop("Division by zero is not allowed")
+  }
   
   ans = switch(op,
       "+" = a + b,
@@ -26,17 +29,18 @@ calculate = function(a, b, op){
       "/" = a / b,
       "%%" = a %% b,
       "^" = a^b,
-      0)
+      stop("Unknown operator:", op)
+  )
   
   return(ans)
 }
 
-while (calc.state) {
+while (TRUE) {
   input <- readline(prompt = "> ")
   
   if (tolower(input) == 'exit'){
     cat("Thank you for using the calculator!\n")
-    calc.state <- FALSE
+    break
   }
   else if (tolower(input) == 'hist'){
     if (nrow(calc.history) == 0) {
@@ -44,7 +48,7 @@ while (calc.state) {
     }
     else {
       for (i in 1:nrow(calc.history)){
-        cat(paste(i, ". ", calc.history[i, "expression"], " = ", calc.history[i, "result"], "\n"))
+        cat(paste(i, ":", calc.history[i, "expression"], "=", calc.history[i, "result"], "\n"))
       }
     }
     next
@@ -68,8 +72,10 @@ Enjoy!\n\n")
   }
   else if (tolower(input) == "clear") {
     cat("\014")
+    next
   }
-  else {
+  
+  tryCatch({
     split.inputs <- strsplit(input, " +")[[1]]
     
     if (length(split.inputs) %% 2 == 0) {
@@ -97,7 +103,9 @@ Enjoy!\n\n")
       calc.history <- rbind(calc.history, data.frame(expression=input, result=calc.ans))
       cat(calc.ans)
     }
-  }
+  }, error = function(e) {
+    cat("Error:", e$message)
+  })
 }
 
 print('Program Successfully Ran')
