@@ -4,6 +4,7 @@ This are the things you can do:
 * In this version, the program runs calculations in order (not PEMDAS)
 * Use the format -> num op num op num ...
 * No other characters except operators mentioned and numbers are allowed
+* Commands are case sensitive
 * Use 'ans' in the calculation to use the last calculation result, or to view the last answer
 * Use 'hist' to view all the previous calculations
 * Use 'clear' to clear the terminal
@@ -44,12 +45,12 @@ while (TRUE) {
   
   # --- COMMAND HANDLING ---
   # -- EXIT ---
-  if (tolower(input) == 'exit'){
+  if (input == 'exit'){
     cat("Thank you for using the calculator!\n")
     break
   }
   # -- HISTORY --
-  else if (tolower(input) == 'hist'){
+  else if (input == 'hist'){
     # - HISTORY IS EMPTY -
     if (nrow(calc.history) == 0) {
       cat('No calculations was done, yet... ;)')
@@ -62,12 +63,12 @@ while (TRUE) {
     next
   }
   # -- ANSWER --
-  else if (tolower(input) == "ans") {
+  else if (input == "ans") {
     cat(calc.ans)
     next
   }
   # -- HELP -- 
-  else if (tolower(input) == "help") {
+  else if (input == "help") {
     cat("This are the things you can do:
 * Do simple calculations with +, -, *, /, %%, ^
 * In this version, the program runs calculations in order (not PEMDAS)
@@ -81,7 +82,7 @@ Enjoy!\n\n")
     next
   }
   # -- CLEAR TERMINAL --
-  else if (tolower(input) == "clear") {
+  else if (input == "clear") {
     cat("\014")
     next
   }
@@ -94,19 +95,15 @@ Enjoy!\n\n")
       cat("Unfinished Statement...")
     }
     else {
+      split.inputs <- ifelse(split.inputs == 'ans', calc.ans, split.inputs)
+      
       calc.a <- split.inputs[1]
-      if (calc.a == 'ans') {
-        calc.a = calc.ans
-      }
       calc.op.idx <- 2
       calc.b.idx <- 3
       
       # - CALCULATION ITERATION -
       while (calc.b.idx <= length(split.inputs)) {
-        calc.b = split.inputs[calc.b.idx]
-        if (calc.b == 'ans') {
-          calc.b = calc.ans
-        }
+        calc.b <- split.inputs[calc.b.idx]
         calc.a <- calculate(calc.a, calc.b, split.inputs[calc.op.idx])
         calc.op.idx = calc.op.idx + 2
         calc.b.idx = calc.b.idx + 2
