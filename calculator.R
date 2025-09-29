@@ -60,11 +60,9 @@ calc.exit = function() {
 # --- CALCULATION PRECEDENCE FUNCTION ---
 calc.precedence = function(inp) {
   for (op in ops) {
-    indexes <- which(inp == op)
-    order <- 0
     
-    for (idx in indexes) {
-      idx <- idx - 2 * order
+    while (op %in% inp) {
+      idx <- which(inp == op)[1]
       
       # - CALCULATE, CHANGE a WITH RESULT -
       a <- inp[idx-1]
@@ -72,8 +70,7 @@ calc.precedence = function(inp) {
       ans <- calc.calculation(a, b, op)
       inp[idx-1] = ans
       
-      # - EDIT INPUT, CHANGE IDX MANIPULATION -
-      order <- order + 1
+      # - EDIT INPUT -
       idx.to.remove <- c(idx, idx+1)
       inp <- inp[-idx.to.remove]
     }
@@ -81,13 +78,14 @@ calc.precedence = function(inp) {
   return(inp)
 }
 
+# --- INPUT VALIDATION FUNCTION ---
 calc.validate <- function(tokens) {
   if (sum(tokens == "(") != sum(tokens == ")")) {
     stop("Mismatched parentheses.")
   }
   
   for (token in tokens) {
-    is_valid <- (token %in% c("(", ")")) ||
+    is_valid <- (token %in% c("(", ")", "pi", "e", "ans")) ||
       (token %in% ops) ||
       (!is.na(suppressWarnings(as.numeric(token))))
     
@@ -111,6 +109,33 @@ calc.validate <- function(tokens) {
   return(TRUE)
 }
 
+# --- PARSE INPUT FUNCTION ---
+calc.parse <- function(inp, ans){
+  inp <- ifelse(inp == 'ans', ans, inp)
+  inp <- ifelse(inp == 'pi', pi, inp)
+  inp <- ifelse(inp == 'e', exp(1), inp)
+  
+  return(inp)
+}
+
+# --- SOLVE FUNCTION ---
+calc.solve <- function(inp) {
+  while ('(' %in% inp) {
+    last.open <- tail(which(inp == '('), n = 1)
+    close <- which(inp == ')')
+    first.close.after.open <- head(close[close>last.open], n = 1)
+    
+    temp.eq <- inp[(last.open+1):(first.close.after.open-1)]
+    temp.eq <- calc.precedence(temp.eq)
+    
+    idx.to.remove <- c((last.open+1):first.close.after.open)
+    inp <- inp[-idx.to.remove]
+    inp[last.open] <- temp.eq
+  }
+  
+  return(calc.precedence(inp)[1])
+}
+
 # --- CALCULATE FUNCTION ---
 calc.calculate = function(inp, ans, history) {
   tryCatch({
@@ -119,23 +144,10 @@ calc.calculate = function(inp, ans, history) {
     # - INPUT HANDLING -
     calc.validate(split.inputs)
     
-    split.inputs <- ifelse(split.inputs == 'ans', ans, split.inputs)
+    # - PARSE -
+    split.inputs <- calc.parse(split.inputs, ans)
     
-    # - PARENTHESIS PRECEDENCE -
-    while ('(' %in% split.inputs) {
-      last.open <- tail(which(split.inputs == '('), n = 1)
-      close <- which(split.inputs == ')')
-      first.close.after.open <- head(close[close>last.open], n = 1)
-      
-      temp.eq <- split.inputs[(last.open+1):(first.close.after.open-1)]
-      temp.eq <- calc.precedence(temp.eq)
-      
-      idx.to.remove <- c((last.open+1):first.close.after.open)
-      split.inputs <- split.inputs[-idx.to.remove]
-      split.inputs[last.open] <- temp.eq
-    }
-    
-    ans <- calc.precedence(split.inputs)[1]
+    ans <- calc.solve(split.inputs)
     history <- rbind(history, data.frame(expression=inp, result=ans))
     cat(ans)
     return(list(ans = ans, history = history))
