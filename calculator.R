@@ -4,8 +4,7 @@ calc.history <- data.frame(expression=character(), result=numeric())
 calc.ans <- 0
 help.text = "This are the things you can do:
 * Do simple calculations with +, -, *, /, %%, ^
-* In this version, the program runs calculations in order (not PEMDAS)
-* Use the format -> num op num op num ...
+* Use the format -> num op num op num ... ex. ( 1 + 2 ) * 3 - 4
 * No other characters except operators mentioned and numbers are allowed
 * Commands are case sensitive
 * Use 'ans' in the calculation to use the last calculation result, or to view the last answer
@@ -58,28 +57,31 @@ calc.exit = function() {
 }
 
 # --- CALCULATION PRECEDENCE FUNCTION ---
-calc.precedence = function(inp, op) {
-  indexes <- which(inp == op)
-  order <- 0
-  
-  for (idx in indexes) {
-    idx <- idx - 2 * order
+calc.precedence = function(inp) {
+  ops <- c('^', '*', '/', '%%', '+', '-')
+  for (op in ops) {
+    indexes <- which(inp == op)
+    order <- 0
     
-    # - CALCULATE, CHANGE a WITH RESULT -
-    a <- inp[idx-1]
-    b <- inp[idx+1]
-    ans <- calc.calculation(a, b, op)
-    inp[idx-1] = ans
-    
-    # - EDIT INPUT, CHANGE IDX MANIPULATION -
-    order <- order + 1
-    idx.to.remove <- c(idx, idx+1)
-    inp <- inp[-idx.to.remove]
+    for (idx in indexes) {
+      idx <- idx - 2 * order
+      
+      # - CALCULATE, CHANGE a WITH RESULT -
+      a <- inp[idx-1]
+      b <- inp[idx+1]
+      ans <- calc.calculation(a, b, op)
+      inp[idx-1] = ans
+      
+      # - EDIT INPUT, CHANGE IDX MANIPULATION -
+      order <- order + 1
+      idx.to.remove <- c(idx, idx+1)
+      inp <- inp[-idx.to.remove]
+    }
   }
-  
   return(inp)
 }
 
+# --- CALCULATE FUNCTION ---
 calc.calculate = function(inp, ans, history) {
   tryCatch({
     split.inputs <- strsplit(inp, " +")[[1]]
@@ -91,12 +93,20 @@ calc.calculate = function(inp, ans, history) {
     else {
       split.inputs <- ifelse(split.inputs == 'ans', ans, split.inputs)
       
-      ops <- c('^', '*', '/', '%%', '+', '-')
-      for (op in ops) {
-        split.inputs <- calc.precedence(split.inputs, op)
+      while ('(' %in% split.inputs) {
+        last.open <- tail(which(split.inputs == '('), n = 1)
+        close <- which(split.inputs == ')')
+        first.close.after.open <- head(close[close>last.open], n = 1)
+        
+        temp.eq <- split.inputs[(last.open+1):(first.close.after.open-1)]
+        temp.eq <- calc.precedence(temp.eq)
+        
+        idx.to.remove <- c((last.open+1):first.close.after.open)
+        split.inputs <- split.inputs[-idx.to.remove]
+        split.inputs[last.open] <- temp.eq
       }
       
-      ans <- split.inputs[1]
+      ans <- calc.precedence(split.inputs)[1]
       history <- rbind(history, data.frame(expression=inp, result=ans))
       cat(ans)
       return(list(ans = ans, history = history))
