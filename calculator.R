@@ -1,4 +1,5 @@
 # --- GLOBAL VARIABLE ---
+ops <- c('^', '*', '/', '%%', '+', '-')
 calc.state = TRUE
 calc.history <- data.frame(expression=character(), result=numeric())
 calc.ans <- 0
@@ -58,7 +59,6 @@ calc.exit = function() {
 
 # --- CALCULATION PRECEDENCE FUNCTION ---
 calc.precedence = function(inp) {
-  ops <- c('^', '*', '/', '%%', '+', '-')
   for (op in ops) {
     indexes <- which(inp == op)
     order <- 0
@@ -81,36 +81,64 @@ calc.precedence = function(inp) {
   return(inp)
 }
 
+calc.validate <- function(tokens) {
+  if (sum(tokens == "(") != sum(tokens == ")")) {
+    stop("Mismatched parentheses.")
+  }
+  
+  for (token in tokens) {
+    is_valid <- (token %in% c("(", ")")) ||
+      (token %in% ops) ||
+      (!is.na(suppressWarnings(as.numeric(token))))
+    
+    if (!is_valid) {
+      stop(paste("Invalid token found:", token))
+    }
+  }
+  
+  for (i in 1:(length(tokens) - 1)) {
+    current_token <- tokens[i]
+    next_token <- tokens[i+1]
+    
+    is_current_op <- current_token %in% ops
+    is_next_op <- next_token %in% ops
+    
+    if (is_current_op && is_next_op) {
+      stop(paste("Invalid sequence: operator", current_token, "followed by operator", next_token))
+    }
+  }
+  
+  return(TRUE)
+}
+
 # --- CALCULATE FUNCTION ---
 calc.calculate = function(inp, ans, history) {
   tryCatch({
     split.inputs <- strsplit(inp, " +")[[1]]
     
-    # - TO BE DEVELOPPED, INPUT HANDLING -
-    if (length(split.inputs) %% 2 == 0) {
-      cat("Unfinished Statement...")
-    }
-    else {
-      split.inputs <- ifelse(split.inputs == 'ans', ans, split.inputs)
+    # - INPUT HANDLING -
+    calc.validate(split.inputs)
+    
+    split.inputs <- ifelse(split.inputs == 'ans', ans, split.inputs)
+    
+    # - PARENTHESIS PRECEDENCE -
+    while ('(' %in% split.inputs) {
+      last.open <- tail(which(split.inputs == '('), n = 1)
+      close <- which(split.inputs == ')')
+      first.close.after.open <- head(close[close>last.open], n = 1)
       
-      while ('(' %in% split.inputs) {
-        last.open <- tail(which(split.inputs == '('), n = 1)
-        close <- which(split.inputs == ')')
-        first.close.after.open <- head(close[close>last.open], n = 1)
-        
-        temp.eq <- split.inputs[(last.open+1):(first.close.after.open-1)]
-        temp.eq <- calc.precedence(temp.eq)
-        
-        idx.to.remove <- c((last.open+1):first.close.after.open)
-        split.inputs <- split.inputs[-idx.to.remove]
-        split.inputs[last.open] <- temp.eq
-      }
+      temp.eq <- split.inputs[(last.open+1):(first.close.after.open-1)]
+      temp.eq <- calc.precedence(temp.eq)
       
-      ans <- calc.precedence(split.inputs)[1]
-      history <- rbind(history, data.frame(expression=inp, result=ans))
-      cat(ans)
-      return(list(ans = ans, history = history))
+      idx.to.remove <- c((last.open+1):first.close.after.open)
+      split.inputs <- split.inputs[-idx.to.remove]
+      split.inputs[last.open] <- temp.eq
     }
+    
+    ans <- calc.precedence(split.inputs)[1]
+    history <- rbind(history, data.frame(expression=inp, result=ans))
+    cat(ans)
+    return(list(ans = ans, history = history))
     
     # - ERROR HANDLING -
   }, error = function(e) {
