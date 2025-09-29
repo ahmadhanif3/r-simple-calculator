@@ -1,5 +1,8 @@
-cat("Hello user! Welcome to the simple calculator. 
-This are the things you can do:
+# --- GLOBAL VARIABLE ---
+calc.state = TRUE
+calc.history <- data.frame(expression=character(), result=numeric())
+calc.ans <- 0
+help.text = "This are the things you can do:
 * Do simple calculations with +, -, *, /, %%, ^
 * In this version, the program runs calculations in order (not PEMDAS)
 * Use the format -> num op num op num ...
@@ -10,14 +13,10 @@ This are the things you can do:
 * Use 'clear' to clear the terminal
 * Use 'help' to show on how to use the program
 * Use 'exit' to quit the program
-Enjoy!\n\n")
-
-# --- GLOBAL VARIABLE ---
-calc.history <- data.frame(expression=character(), result=numeric())
-calc.ans <- 0
+Enjoy!\n\n"
 
 # --- CALCULATE FUNCTION ---
-calculate = function(a, b, op){
+calc.calculation = function(a, b, op){
   a <- as.numeric(a)
   b <- as.numeric(b)
   
@@ -39,85 +38,91 @@ calculate = function(a, b, op){
   return(ans)
 }
 
-# --- MAIN LOOP ---
-while (TRUE) {
-  input <- readline(prompt = "> ")
+# --- HISTORY FUNCTION ---
+calc.show.history = function(history){
+  # - HISTORY IS EMPTY -
+  if (nrow(history) == 0) {
+    cat('No calculations was done, yet... ;)')
+  }
+  else {
+    for (i in 1:nrow(history)){
+      cat(paste(i, ":", history[i, "expression"], "=", history[i, "result"], "\n"))
+    }
+  }
+}
+
+# --- EXIT FUNCTION ---
+calc.exit = function() {
+  cat("Thank you for using the calculator!\n")
+  return(FALSE)
+}
+
+calc.precedence = function(inp, op) {
+  indexes <- which(inp == op)
+  order <- 0
   
-  # --- COMMAND HANDLING ---
-  # -- EXIT ---
-  if (input == 'exit'){
-    cat("Thank you for using the calculator!\n")
-    break
-  }
-  # -- HISTORY --
-  else if (input == 'hist'){
-    # - HISTORY IS EMPTY -
-    if (nrow(calc.history) == 0) {
-      cat('No calculations was done, yet... ;)')
-    }
-    else {
-      for (i in 1:nrow(calc.history)){
-        cat(paste(i, ":", calc.history[i, "expression"], "=", calc.history[i, "result"], "\n"))
-      }
-    }
-    next
-  }
-  # -- ANSWER --
-  else if (input == "ans") {
-    cat(calc.ans)
-    next
-  }
-  # -- HELP -- 
-  else if (input == "help") {
-    cat("This are the things you can do:
-* Do simple calculations with +, -, *, /, %%, ^
-* In this version, the program runs calculations in order (not PEMDAS)
-* Use the format -> num op num op num ...
-* No other characters except operators mentioned and numbers are allowed
-* Use 'ans' in the calculation to use the last calculation result, or to view the last answer
-* Use 'hist' to view all the previous calculations
-* Use 'help' to show on how to use the program
-* Use 'exit' to quit the program
-Enjoy!\n\n")
-    next
-  }
-  # -- CLEAR TERMINAL --
-  else if (input == "clear") {
-    cat("\014")
-    next
+  for (idx in indexes) {
+    idx <- idx - 2 * order
+    order <- order + 1
+    
+    a <- inp[idx-1]
+    b <- inp[idx+1]
+    ans <- calc.calculation(a, b, op)
+    inp[idx-1] = ans
+    
+    idx.to.remove <- c(idx, idx+1)
+    inp <- inp[-idx.to.remove]
   }
   
+  return(inp)
+}
+
+calc.calculate = function(inp, ans, history) {
   tryCatch({
-    split.inputs <- strsplit(input, " +")[[1]]
+    split.inputs <- strsplit(inp, " +")[[1]]
     
     # - TO BE DEVELOPPED, INPUT HANDLING -
     if (length(split.inputs) %% 2 == 0) {
       cat("Unfinished Statement...")
     }
     else {
-      split.inputs <- ifelse(split.inputs == 'ans', calc.ans, split.inputs)
+      split.inputs <- ifelse(split.inputs == 'ans', ans, split.inputs)
       
-      calc.a <- split.inputs[1]
-      calc.op.idx <- 2
-      calc.b.idx <- 3
-      
-      # - CALCULATION ITERATION -
-      while (calc.b.idx <= length(split.inputs)) {
-        calc.b <- split.inputs[calc.b.idx]
-        calc.a <- calculate(calc.a, calc.b, split.inputs[calc.op.idx])
-        calc.op.idx = calc.op.idx + 2
-        calc.b.idx = calc.b.idx + 2
+      ops <- c('^', '*', '/', '%%', '+', '-')
+      for (op in ops) {
+        split.inputs <- calc.precedence(split.inputs, op)
       }
       
-      calc.ans <- calc.a
-      calc.history <- rbind(calc.history, data.frame(expression=input, result=calc.ans))
-      cat(calc.ans)
+      ans <- split.inputs[1]
+      history <- rbind(history, data.frame(expression=inp, result=ans))
+      cat(ans)
+      return(list(ans = ans, history = history))
     }
     
-  # - ERROR HANDLING -
+    # - ERROR HANDLING -
   }, error = function(e) {
     cat("Error:", e$message)
   })
+}
+
+cat("Hello user! Welcome to the simple calculator.\n", help.text)
+# --- MAIN LOOP ---
+while (calc.state) {
+  input <- readline(prompt = "> ")
+  
+  # --- COMMAND HANDLING ---
+  switch(input,
+         "exit" = {calc.state <- calc.exit()},
+         "hist" = calc.show.history(calc.history),
+         "ans" = cat(calc.ans),
+         "help" = cat(help.text),
+         "clear" = cat("\014"),
+         {
+          result <- calc.calculate(input, calc.ans, calc.history)
+          calc.ans <- result$ans
+          calc.history <- result$history
+         }
+  )
 }
 
 print('Program Successfully Ran')
