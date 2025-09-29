@@ -57,19 +57,22 @@ calc.exit = function() {
   return(FALSE)
 }
 
+# --- CALCULATION PRECEDENCE FUNCTION ---
 calc.precedence = function(inp, op) {
   indexes <- which(inp == op)
   order <- 0
   
   for (idx in indexes) {
     idx <- idx - 2 * order
-    order <- order + 1
     
+    # - CALCULATE, CHANGE a WITH RESULT -
     a <- inp[idx-1]
     b <- inp[idx+1]
     ans <- calc.calculation(a, b, op)
     inp[idx-1] = ans
     
+    # - EDIT INPUT, CHANGE IDX MANIPULATION -
+    order <- order + 1
     idx.to.remove <- c(idx, idx+1)
     inp <- inp[-idx.to.remove]
   }
